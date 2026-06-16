@@ -32,6 +32,7 @@
       document.getElementById('app').classList.remove('hidden');
       document.title = 'Admin Dashboard — AYA x Destine Events';
       loadDashboard();
+      startRealtime();
     } else {
       err.classList.remove('hidden');
       document.getElementById('pw-input').value = '';
@@ -40,6 +41,7 @@
   }
 
   function logout() {
+    if (realtimeChannel) { db.removeChannel(realtimeChannel); realtimeChannel = null; }
     sessionStorage.removeItem(SESSION_KEY);
     document.getElementById('app').classList.add('hidden');
     document.getElementById('login-screen').classList.remove('hidden');
@@ -190,9 +192,33 @@
 
   function setText(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
 
+  let realtimeChannel = null;
+
+  function startRealtime() {
+    if (realtimeChannel) return; // already subscribed
+    realtimeChannel = db.channel('admin-dashboard')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'registrations' }, () => {
+        loadDashboard();
+        flashIndicator();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, loadDashboard)
+      .subscribe();
+  }
+
+  function flashIndicator() {
+    const el = document.getElementById('realtime-dot');
+    if (!el) return;
+    el.classList.add('bg-moss');
+    el.classList.remove('bg-pine/20');
+    setTimeout(() => { el.classList.remove('bg-moss'); el.classList.add('bg-pine/20'); }, 1500);
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
-    if (sessionStorage.getItem(SESSION_KEY) === 'true') loadDashboard();
+    if (sessionStorage.getItem(SESSION_KEY) === 'true') {
+      loadDashboard();
+      startRealtime();
+    }
   });
 </script>
 <script>
@@ -349,7 +375,13 @@
 
     <!-- Topbar -->
     <header class="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-pine/8 bg-fog-warm/95 px-8 backdrop-blur-md">
-      <div id="page-title" class="font-display text-xl text-pine">Overview</div>
+      <div class="flex items-center gap-3">
+        <div id="page-title" class="font-display text-xl text-pine">Overview</div>
+        <div class="flex items-center gap-1.5 rounded-full border border-pine/10 bg-white px-2.5 py-1">
+          <span id="realtime-dot" class="h-1.5 w-1.5 rounded-full bg-pine/20 transition-colors duration-300"></span>
+          <span class="font-mono text-[0.48rem] uppercase tracking-[0.12em] text-muted">Live</span>
+        </div>
+      </div>
       <div class="flex items-center gap-3">
         <a href="events-hub.html" target="_blank" class="rounded-md border border-pine/15 px-4 py-1.5 font-mono text-[0.55rem] uppercase tracking-[0.12em] text-muted hover:border-pine/30 hover:text-pine transition-colors">
           View Site ↗

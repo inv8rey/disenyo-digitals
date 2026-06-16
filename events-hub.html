@@ -122,7 +122,14 @@
     });
   }
 
-  document.addEventListener('DOMContentLoaded', loadEvents);
+  document.addEventListener('DOMContentLoaded', () => {
+    loadEvents();
+    // Real-time: reload cards when registrations or events change
+    db.channel('events-hub')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'registrations' }, loadEvents)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' },        loadEvents)
+      .subscribe();
+  });
 </script>
 
 <!-- ══════════════════════════════
@@ -134,11 +141,11 @@
       <em class="italic text-gold-light">As You Are</em> Baguio
     </div>
     <div class="ml-auto hidden items-center gap-7 md:flex">
-      <a href="#" class="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-fog/60 hover:text-fog transition-colors">Home</a>
-      <a href="#" class="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-fog/60 hover:text-fog transition-colors">Community</a>
+      <a href="Downloads/disenyoCollectives_Landing%20Page%20etc/Main%20Landing%20page.html" class="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-fog/60 hover:text-fog transition-colors">Home</a>
+      <a href="Downloads/disenyoCollectives_Landing%20Page%20etc/destinevents_AYA/AYA%20BAGUIO%20LANDING.html" class="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-fog/60 hover:text-fog transition-colors">Community</a>
       <a href="#" class="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-fog/60 hover:text-fog transition-colors">eMagazine</a>
       <a href="#" class="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-fog/60 hover:text-fog transition-colors">SME Directory</a>
-      <a href="#" class="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-gold-light transition-colors">Events</a>
+      <a href="events-hub.html" class="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-gold-light transition-colors">Events</a>
       <a href="#" class="rounded-sm bg-gold px-5 py-1.5 font-mono text-[0.58rem] font-medium uppercase tracking-[0.14em] text-pine-deep transition-colors hover:bg-gold-light">
         Get Tickets
       </a>
