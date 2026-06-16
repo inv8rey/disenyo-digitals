@@ -3,11 +3,51 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Dashboard — AYA x Destine Events</title>
+<title>Admin Login — AYA x Destine Events</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+  // ── Auth gate ──
+  const ADMIN_PASSWORD = 'disenyo@digitals2026';
+  const SESSION_KEY    = 'aya_admin_auth';
+
+  function checkAuth() {
+    if (sessionStorage.getItem(SESSION_KEY) !== 'true') {
+      document.getElementById('login-screen').classList.remove('hidden');
+      document.getElementById('app').classList.add('hidden');
+    } else {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+    }
+  }
+
+  function submitLogin(e) {
+    e.preventDefault();
+    const pw  = document.getElementById('pw-input').value;
+    const err = document.getElementById('pw-error');
+    if (pw === ADMIN_PASSWORD) {
+      sessionStorage.setItem(SESSION_KEY, 'true');
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      document.title = 'Admin Dashboard — AYA x Destine Events';
+      loadDashboard();
+    } else {
+      err.classList.remove('hidden');
+      document.getElementById('pw-input').value = '';
+      document.getElementById('pw-input').focus();
+    }
+  }
+
+  function logout() {
+    sessionStorage.removeItem(SESSION_KEY);
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-error').classList.add('hidden');
+    document.title = 'Admin Login — AYA x Destine Events';
+  }
+
   const SUPABASE_URL     = 'https://rjuxowagbipjgvaqwgqq.supabase.co';
   const SUPABASE_SERVICE = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqdXhvd2FnYmlwamd2YXF3Z3FxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTU3NDM5MiwiZXhwIjoyMDk3MTUwMzkyfQ.gvi-tKBuQJ90d71jccZYJP1DL_DSfZGqk7pzjNMST9A';
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE);
@@ -150,7 +190,10 @@
 
   function setText(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
 
-  document.addEventListener('DOMContentLoaded', loadDashboard);
+  document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    if (sessionStorage.getItem(SESSION_KEY) === 'true') loadDashboard();
+  });
 </script>
 <script>
   tailwind.config = {
@@ -209,6 +252,43 @@
 </head>
 <body class="bg-fog-warm text-ink antialiased">
 
+<!-- ══════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════ -->
+<div id="login-screen" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-pine-deep">
+  <div class="w-full max-w-sm px-6">
+    <div class="mb-8 text-center">
+      <div class="mb-3 flex justify-center">
+        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gold/20 text-xl">✦</div>
+      </div>
+      <div class="font-display text-2xl text-fog"><em class="italic text-gold-light">As You Are</em> Baguio</div>
+      <div class="mt-1 font-mono text-[0.55rem] uppercase tracking-[0.16em] text-fog/35">Admin Dashboard</div>
+    </div>
+
+    <form onsubmit="submitLogin(event)" class="space-y-4">
+      <div>
+        <label class="mb-1.5 block font-mono text-[0.55rem] uppercase tracking-[0.12em] text-fog/45">Password</label>
+        <input id="pw-input" type="password" placeholder="Enter admin password"
+          class="w-full rounded-md border border-fog/10 bg-white/5 px-4 py-3 text-sm text-fog placeholder-fog/25 outline-none focus:border-gold/40 focus:bg-white/8 transition-colors"
+          autofocus>
+      </div>
+      <p id="pw-error" class="hidden font-mono text-[0.55rem] uppercase tracking-[0.12em] text-terra">Incorrect password — try again</p>
+      <button type="submit"
+        class="w-full rounded-sm bg-gold py-3 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-pine-deep hover:bg-gold-light transition-colors">
+        Sign In →
+      </button>
+    </form>
+
+    <p class="mt-6 text-center font-mono text-[0.5rem] uppercase tracking-[0.12em] text-fog/20">
+      Powered by Destine Events · Built by Disenyo Digitals
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     MAIN APP
+══════════════════════════════ -->
+<div id="app" class="hidden">
 <div class="flex min-h-screen">
 
   <!-- ══════════════════════════════
@@ -277,6 +357,9 @@
         <button class="relative rounded-md border border-pine/15 px-3 py-1.5 font-mono text-[0.55rem] uppercase tracking-[0.12em] text-muted hover:border-pine/30 transition-colors">
           🔔
           <span class="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-terra text-[0.4rem] text-fog">3</span>
+        </button>
+        <button onclick="logout()" class="rounded-md border border-pine/15 px-4 py-1.5 font-mono text-[0.55rem] uppercase tracking-[0.12em] text-muted hover:border-terra/40 hover:text-terra transition-colors">
+          Sign Out
         </button>
       </div>
     </header>
@@ -677,5 +760,6 @@
   }
 </script>
 
+</div><!-- /app -->
 </body>
 </html>
