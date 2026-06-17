@@ -55,6 +55,8 @@ module.exports = async function handler(req, res) {
       };
       const paidAmount = amountToPesos(resource);
       if (paidAmount != null) paidFields.amount_paid = paidAmount;
+      const payMongoRef = resource?.attributes?.payments?.[0]?.id || resource?.id || null;
+      if (payMongoRef) paidFields.payment_ref = payMongoRef;
       await updateRegistration(registrationId, paidFields);
     } else if (
       eventType === 'checkout_session.payment.failed' ||

@@ -159,7 +159,7 @@
           <td>${statusBadge(r.payment_status)}</td>
           <td><span class="font-mono text-xs text-muted">${new Date(r.registered_at).toLocaleDateString('en-PH',{month:'short',day:'numeric'})}</span></td>
           <td>
-            ${r.payment_status === 'pending' ? `<button onclick="confirmPayment('${r.id}')" class="font-mono text-[0.52rem] uppercase tracking-[0.1em] text-moss hover:text-moss/70 mr-2">Confirm</button>` : ''}
+            ${r.payment_status === 'pending' ? `<button onclick="confirmPayment('${r.id}', ${r.ticket_types?.price ?? 0})" class="font-mono text-[0.52rem] uppercase tracking-[0.1em] text-moss hover:text-moss/70 mr-2">Confirm</button>` : ''}
             <button class="font-mono text-[0.52rem] uppercase tracking-[0.1em] text-terra hover:text-terra/70">View</button>
           </td>
         </tr>`).join('');
@@ -175,8 +175,9 @@
     });
   }
 
-  async function confirmPayment(id) {
-    await db.from('registrations').update({ payment_status:'confirmed', amount_paid: null }).eq('id', id);
+  async function confirmPayment(id, amount) {
+    // Record the ticket price as paid so it counts toward Revenue.
+    await db.from('registrations').update({ payment_status:'confirmed', amount_paid: amount ?? null }).eq('id', id);
     loadDashboard();
   }
 
@@ -320,7 +321,7 @@
   <!-- ══════════════════════════════
        SIDEBAR
   ══════════════════════════════ -->
-  <aside class="fixed inset-y-0 left-0 z-40 flex w-56 flex-col bg-pine-deep">
+  <aside id="admin-sidebar" class="fixed inset-y-0 left-0 z-40 flex w-56 flex-col bg-pine-deep -translate-x-full transition-transform duration-300 md:translate-x-0">
 
     <!-- Logo -->
     <div class="flex h-14 flex-shrink-0 items-center gap-2.5 border-b border-fog/10 px-5">
@@ -368,14 +369,22 @@
     </div>
   </aside>
 
+  <!-- Mobile sidebar backdrop -->
+  <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 z-30 hidden bg-black/40 md:hidden"></div>
+
   <!-- ══════════════════════════════
        MAIN CONTENT
   ══════════════════════════════ -->
-  <div class="ml-56 flex flex-1 flex-col">
+  <div class="flex flex-1 flex-col md:ml-56">
 
     <!-- Topbar -->
-    <header class="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-pine/8 bg-fog-warm/95 px-8 backdrop-blur-md">
+    <header class="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-pine/8 bg-fog-warm/95 px-4 md:px-8 backdrop-blur-md">
       <div class="flex items-center gap-3">
+        <button onclick="toggleSidebar()" aria-label="Toggle menu" class="md:hidden -ml-1 flex flex-col gap-1 p-1">
+          <span class="h-0.5 w-5 bg-pine"></span>
+          <span class="h-0.5 w-5 bg-pine"></span>
+          <span class="h-0.5 w-5 bg-pine"></span>
+        </button>
         <div id="page-title" class="font-display text-xl text-pine">Overview</div>
         <div class="flex items-center gap-1.5 rounded-full border border-pine/10 bg-white px-2.5 py-1">
           <span id="realtime-dot" class="h-1.5 w-1.5 rounded-full bg-pine/20 transition-colors duration-300"></span>
@@ -550,8 +559,8 @@
       </div>
 
       <!-- Table -->
-      <div class="overflow-hidden rounded-xl border border-pine/10 bg-white">
-        <table class="w-full">
+      <div class="overflow-x-auto rounded-xl border border-pine/10 bg-white">
+        <table class="w-full min-w-[760px]">
           <thead><tr class="bg-fog/40">
             <th class="text-left">Registrant</th>
             <th class="text-left">Event</th>
@@ -789,6 +798,19 @@
     // Update page title
     const titles = { overview:'Overview', events:'Events', registrations:'Registrations', tickets:'Tickets & QR Codes', community:'Community', settings:'Settings' };
     document.getElementById('page-title').textContent = titles[name] || name;
+    closeSidebarMobile();
+  }
+
+  function toggleSidebar() {
+    document.getElementById('admin-sidebar').classList.toggle('-translate-x-full');
+    document.getElementById('sidebar-backdrop').classList.toggle('hidden');
+  }
+
+  function closeSidebarMobile() {
+    if (window.innerWidth < 768) {
+      document.getElementById('admin-sidebar').classList.add('-translate-x-full');
+      document.getElementById('sidebar-backdrop').classList.add('hidden');
+    }
   }
 </script>
 

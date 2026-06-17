@@ -135,6 +135,7 @@ module.exports = async function handler(req, res) {
     await updateRegistration(registrationId, {
       payment_status: 'pending',
       payment_method: 'paymongo',
+      payment_ref: session?.id || null,
     }).catch(error => {
       console.error('Registration checkout reference update failed:', error.message);
     });
